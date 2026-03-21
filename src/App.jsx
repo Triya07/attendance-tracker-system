@@ -1,6 +1,9 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/AdminDashboard";
+import StudentDashboard from "./pages/StudentDashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
 
 function App() {
   return (
@@ -10,10 +13,11 @@ function App() {
 
       {/* Login */}
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
 
       {/* Future routes (placeholders) */}
-      <Route path="/student/dashboard" element={<h1>Student Dashboard</h1>} />
-      <Route path="/teacher/dashboard" element={<h1>Teacher Dashboard</h1>} />
+      <Route path="/student/dashboard" element={<StudentDashboard />} />
+      <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
     </Routes>

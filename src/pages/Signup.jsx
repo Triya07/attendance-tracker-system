@@ -4,9 +4,10 @@ import AuthLayout from "../layouts/AuthLayout";
 import InputField from "../components/InputField";
 import SelectField from "../components/SelectField";
 import PrimaryButton from "../components/PrimaryButton";
-import { userAPI, setAuthToken } from "../utils/apiClient";
+import { setAuthToken, userAPI } from "../utils/apiClient";
 
-const Login = () => {
+const Signup = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
@@ -15,10 +16,11 @@ const Login = () => {
 
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
+  const handleSignup = async () => {
+    const normalizedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
 
-    if (!normalizedEmail || !password || !role) {
+    if (!normalizedName || !normalizedEmail || !password || !role) {
       setError("Please fill all fields");
       return;
     }
@@ -27,30 +29,32 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await userAPI.login(normalizedEmail, password, role);
-      
-      // Store the auth token
-      setAuthToken(response.token);
-      
-      // Store user data
-      localStorage.setItem("currentUser", JSON.stringify({
-        id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
-      }));
+      await userAPI.register({
+        name: normalizedName,
+        email: normalizedEmail,
+        password,
+        role,
+      });
 
-      // Navigate based on role
-      if (response.role === "student") navigate("/student/dashboard");
-      else if (response.role === "teacher") navigate("/teacher/dashboard");
-      else if (response.role === "admin") navigate("/admin/dashboard");
+      const loginResponse = await userAPI.login(normalizedEmail, password, role);
+      setAuthToken(loginResponse.token);
+
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify({
+          id: loginResponse._id,
+          name: loginResponse.name,
+          email: loginResponse.email,
+          role: loginResponse.role,
+        }),
+      );
+
+      if (loginResponse.role === "student") navigate("/student/dashboard");
+      else if (loginResponse.role === "teacher") navigate("/teacher/dashboard");
+      else navigate("/admin/dashboard");
     } catch (err) {
-      if (err.message === "Role mismatch for this account") {
-        setError("Role does not match this account. Please choose the correct role.");
-      } else {
-        setError(err.message || "Login failed. Please check your credentials.");
-      }
-      console.error("Login error:", err);
+      setError(err.message || "Signup failed. Please try again.");
+      console.error("Signup error:", err);
     } finally {
       setLoading(false);
     }
@@ -59,12 +63,12 @@ const Login = () => {
   return (
     <AuthLayout>
       <div className="auth-brand-row">
-        <div className="auth-brand-pill">University Portal</div>
+        <div className="auth-brand-pill">Attendance Tracking System</div>
         <div className="auth-brand-dot" aria-hidden="true" />
       </div>
 
-      <h2 className="auth-title">Welcome Back</h2>
-      <p className="auth-subtitle">Sign in to manage attendance, classes, and reports.</p>
+      <h2 className="auth-title">Create Account</h2>
+      <p className="auth-subtitle">Join the portal to track attendance and class activities.</p>
 
       {error && (
         <div className="auth-alert" role="alert">
@@ -73,6 +77,14 @@ const Login = () => {
       )}
 
       <div className="auth-form">
+        <InputField
+          label="Full Name"
+          placeholder="Enter your full name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={loading}
+        />
+
         <InputField
           label="Institute Email"
           placeholder="name@youruniversity.edu"
@@ -84,14 +96,14 @@ const Login = () => {
         <InputField
           label="Password"
           type="password"
-          placeholder="Enter your password"
+          placeholder="Create a password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={loading}
         />
 
         <SelectField
-          label="Login As"
+          label="Register As"
           value={role}
           onChange={(e) => setRole(e.target.value)}
           options={[
@@ -104,24 +116,24 @@ const Login = () => {
         />
 
         <PrimaryButton
-          text={loading ? "Logging in..." : "Login"}
-          onClick={handleLogin}
+          text={loading ? "Creating account..." : "Sign Up"}
+          onClick={handleSignup}
           disabled={loading}
         />
       </div>
 
       <p className="auth-switch">
-        New user?{" "}
+        Already have an account?{" "}
         <button
           type="button"
-          onClick={() => navigate("/signup")}
+          onClick={() => navigate("/login")}
           className="auth-switch-btn"
         >
-          Create account
+          Login
         </button>
       </p>
     </AuthLayout>
   );
 };
 
-export default Login;
+export default Signup;
