@@ -40,15 +40,6 @@ function AdminDashboard() {
     ];
   });
 
-  const [assignments, setAssignments] = useState(() => {
-    const saved = localStorage.getItem("assignments");
-    return saved ? JSON.parse(saved) : [
-      { id: 1, subject: "DBMS", teacher: "Dr. Priya Sharma", semester: "4", section: "A" },
-      { id: 2, subject: "Data Structures", teacher: "Dr. Priya Sharma", semester: "3", section: "B" },
-      { id: 3, subject: "Web Development", teacher: "Prof. Rajesh Patel", semester: "4", section: "A" },
-    ];
-  });
-
   // Save students to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem("students", JSON.stringify(students));
@@ -64,11 +55,6 @@ function AdminDashboard() {
     localStorage.setItem("courses", JSON.stringify(courses));
   }, [courses]);
 
-  // Save assignments to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("assignments", JSON.stringify(assignments));
-  }, [assignments]);
-
   // Modal states
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState(null);
@@ -80,7 +66,6 @@ function AdminDashboard() {
     { label: "Total Students", value: students.length, color: "blue", icon: "👥" },
     { label: "Total Teachers", value: teachers.length, color: "orange", icon: "👨‍🏫" },
     { label: "Total Courses", value: courses.length, color: "green", icon: "📚" },
-    { label: "Assignments", value: assignments.length, color: "purple", icon: "🔗" },
   ];
 
   const openModal = (type, item = null) => {
@@ -134,15 +119,6 @@ function AdminDashboard() {
     closeModal();
   };
 
-  const handleSaveAssignment = () => {
-    if (editingId) {
-      setAssignments(assignments.map(a => a.id === editingId ? { ...a, ...formData } : a));
-    } else {
-      setAssignments([...assignments, { id: Date.now(), ...formData }]);
-    }
-    closeModal();
-  };
-
   const deleteStudent = (id) => {
     if (confirm("Are you sure you want to delete this student?")) {
       setStudents(students.filter(s => s.id !== id));
@@ -158,12 +134,6 @@ function AdminDashboard() {
   const deleteCourse = (id) => {
     if (confirm("Are you sure you want to delete this course?")) {
       setCourses(courses.filter(c => c.id !== id));
-    }
-  };
-
-  const deleteAssignment = (id) => {
-    if (confirm("Are you sure you want to delete this assignment?")) {
-      setAssignments(assignments.filter(a => a.id !== id));
     }
   };
 
@@ -232,12 +202,6 @@ function AdminDashboard() {
           onClick={() => setActiveTab("courses")}
         >
           <span className="tab-icon">📚</span> Manage Courses
-        </button>
-        <button
-          className={`nav-tab ${activeTab === "assignments" ? "active" : ""}`}
-          onClick={() => setActiveTab("assignments")}
-        >
-          <span className="tab-icon">🔗</span> Teacher Assignments
         </button>
       </div>
 
@@ -403,58 +367,6 @@ function AdminDashboard() {
         </div>
       )}
 
-      {/* ASSIGNMENTS TAB */}
-      {activeTab === "assignments" && (
-        <div className="tab-content">
-          <div className="glass-panel">
-            <div className="section-header">
-              <h3>Assign Teachers to Subjects</h3>
-              <button className="add-btn" onClick={() => openModal("assignment")}>
-                ➕ Add Assignment
-              </button>
-            </div>
-
-            <div className="table-wrapper">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Subject</th>
-                    <th>Teacher</th>
-                    <th>Semester</th>
-                    <th>Section</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {assignments.map((assignment, idx) => (
-                    <tr key={assignment.id} style={{ animationDelay: `${idx * 0.05}s` }}>
-                      <td>{assignment.subject}</td>
-                      <td>{assignment.teacher}</td>
-                      <td>{assignment.semester}</td>
-                      <td>{assignment.section}</td>
-                      <td>
-                        <button
-                          className="action-btn edit"
-                          onClick={() => openModal("assignment", assignment)}
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          className="action-btn delete"
-                          onClick={() => deleteAssignment(assignment.id)}
-                        >
-                          🗑️ Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* MODAL */}
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
@@ -466,9 +378,7 @@ function AdminDashboard() {
                   ? "Student"
                   : modalType === "teacher"
                   ? "Teacher"
-                  : modalType === "course"
-                  ? "Course"
-                  : "Assignment"}
+                  : "Course"}
               </h2>
               <button className="modal-close" onClick={closeModal}>
                 ✕
@@ -613,50 +523,6 @@ function AdminDashboard() {
                 </div>
               )}
 
-              {modalType === "assignment" && (
-                <div className="form-group-container">
-                  <div className="form-group">
-                    <label>Subject</label>
-                    <input
-                      type="text"
-                      name="subject"
-                      value={formData.subject || ""}
-                      onChange={handleInputChange}
-                      placeholder="Enter subject name"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Teacher</label>
-                    <input
-                      type="text"
-                      name="teacher"
-                      value={formData.teacher || ""}
-                      onChange={handleInputChange}
-                      placeholder="Enter teacher name"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Semester</label>
-                    <input
-                      type="text"
-                      name="semester"
-                      value={formData.semester || ""}
-                      onChange={handleInputChange}
-                      placeholder="e.g., 3"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Section</label>
-                    <input
-                      type="text"
-                      name="section"
-                      value={formData.section || ""}
-                      onChange={handleInputChange}
-                      placeholder="e.g., A"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="modal-footer">
@@ -670,9 +536,7 @@ function AdminDashboard() {
                     ? handleSaveStudent
                     : modalType === "teacher"
                     ? handleSaveTeacher
-                    : modalType === "course"
-                    ? handleSaveCourse
-                    : handleSaveAssignment
+                    : handleSaveCourse
                 }
               >
                 {editingId ? "Update" : "Add"} {modalType?.charAt(0).toUpperCase() + modalType?.slice(1)}

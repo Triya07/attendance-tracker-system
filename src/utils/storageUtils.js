@@ -8,7 +8,6 @@ export const adminStorageKeys = {
   STUDENTS: "students",
   TEACHERS: "teachers",
   COURSES: "courses",
-  ASSIGNMENTS: "assignments",
 };
 
 // Student Dashboard Data

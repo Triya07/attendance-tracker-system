@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { assignmentAPI, attendanceAPI } from "../utils/apiClient";
+import { attendanceAPI } from "../utils/apiClient";
 import "../styles/teacher-dashboard.css";
 
 const classTemplates = [
@@ -12,7 +12,6 @@ function TeacherDashboard() {
   const [students, setStudents] = useState([]);
   const [records, setRecords] = useState([]);
   const [reportRows, setReportRows] = useState([]);
-  const [assignments, setAssignments] = useState([]);
   const [selectedClass, setSelectedClass] = useState(classTemplates[0]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [attendanceStatus, setAttendanceStatus] = useState({});
@@ -22,13 +21,6 @@ function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  const [assignmentForm, setAssignmentForm] = useState({
-    title: "",
-    description: "",
-    dueDate: "",
-    subject: classTemplates[0].subject,
-  });
 
   const currentUser = useMemo(() => {
     try {
@@ -56,18 +48,16 @@ function TeacherDashboard() {
     setError("");
 
     try {
-      const [studentsResponse, recordsResponse, reportResponse, assignmentResponse] =
+      const [studentsResponse, recordsResponse, reportResponse] =
         await Promise.all([
           attendanceAPI.getTeacherStudents(),
           attendanceAPI.getTeacherRecords(),
           attendanceAPI.getTeacherReport(),
-          assignmentAPI.list(),
         ]);
 
       setStudents(studentsResponse);
       setRecords(recordsResponse);
       setReportRows(reportResponse);
-      setAssignments(assignmentResponse);
     } catch (fetchError) {
       setError(fetchError.message || "Failed to load teacher dashboard data");
     } finally {
@@ -182,27 +172,6 @@ function TeacherDashboard() {
     setActiveTab("records");
   };
 
-  const handleCreateAssignment = async () => {
-    if (!assignmentForm.title || !assignmentForm.dueDate) {
-      setError("Assignment title and due date are required");
-      return;
-    }
-
-    try {
-      await assignmentAPI.create(assignmentForm);
-      setAssignmentForm({
-        title: "",
-        description: "",
-        dueDate: "",
-        subject: selectedClass.subject,
-      });
-      setMessage("Assignment created successfully");
-      await loadTeacherData();
-    } catch (assignmentError) {
-      setError(assignmentError.message || "Failed to create assignment");
-    }
-  };
-
   if (loading) {
     return (
       <div className="teacher-dashboard">
@@ -282,12 +251,6 @@ function TeacherDashboard() {
           onClick={() => setActiveTab("edit")}
         >
           <span className="tab-icon">✏️</span> Edit Attendance
-        </button>
-        <button
-          className={`nav-tab ${activeTab === "assignment" ? "active" : ""}`}
-          onClick={() => setActiveTab("assignment")}
-        >
-          <span className="tab-icon">📚</span> Assignments
         </button>
       </div>
 
@@ -690,116 +653,6 @@ function TeacherDashboard() {
                 <p className="empty-state-text">Select a record from the View Records tab to edit</p>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === "assignment" && (
-        <div className="tab-content">
-          <div className="glass-panel report-section">
-            <div className="section-header">
-              <h3>Manage Assignments</h3>
-              <p className="section-subtitle">Create assignments and track upcoming deadlines</p>
-            </div>
-
-            <div className="selection-grid">
-              <div className="selection-form-group">
-                <label className="form-label">Title</label>
-                <input
-                  className="form-select"
-                  value={assignmentForm.title}
-                  onChange={(e) =>
-                    setAssignmentForm((prev) => ({
-                      ...prev,
-                      title: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="selection-form-group">
-                <label className="form-label">Due Date</label>
-                <input
-                  type="date"
-                  className="form-select"
-                  value={assignmentForm.dueDate}
-                  onChange={(e) =>
-                    setAssignmentForm((prev) => ({
-                      ...prev,
-                      dueDate: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="selection-form-group">
-                <label className="form-label">Subject</label>
-                <select
-                  className="form-select"
-                  value={assignmentForm.subject}
-                  onChange={(e) =>
-                    setAssignmentForm((prev) => ({
-                      ...prev,
-                      subject: e.target.value,
-                    }))
-                  }
-                >
-                  {classTemplates.map((cls) => (
-                    <option key={cls.id} value={cls.subject}>
-                      {cls.subject}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="selection-form-group">
-                <label className="form-label">Description</label>
-                <input
-                  className="form-select"
-                  value={assignmentForm.description}
-                  onChange={(e) =>
-                    setAssignmentForm((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="action-buttons">
-              <button className="action-btn green" onClick={handleCreateAssignment}>
-                + Create Assignment
-              </button>
-            </div>
-
-            <div className="records-table-wrapper">
-              <table className="records-table">
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Subject</th>
-                    <th>Due Date</th>
-                    <th>Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {assignments.map((item) => (
-                    <tr key={item._id}>
-                      <td>{item.title}</td>
-                      <td>{item.subject}</td>
-                      <td>{new Date(item.dueDate).toLocaleDateString()}</td>
-                      <td>{item.description || "-"}</td>
-                    </tr>
-                  ))}
-                  {assignments.length === 0 && (
-                    <tr>
-                      <td colSpan="4">No assignments created yet</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       )}

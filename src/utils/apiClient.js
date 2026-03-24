@@ -121,28 +121,6 @@ export const attendanceAPI = {
   },
 };
 
-export const assignmentAPI = {
-  list: async () => {
-    return apiCall("/assignments", {
-      method: "GET",
-    });
-  },
-
-  create: async (payload) => {
-    return apiCall("/assignments", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-  },
-
-  update: async (id, payload) => {
-    return apiCall(`/assignments/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
-  },
-};
-
 /**
  * Helper function to save auth token
  */
