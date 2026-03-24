@@ -8,6 +8,7 @@
   --auth-border: #d6deea;
   --auth-card-bg: rgba(252, 254, 255, 0.9);
   --auth-shadow: 0 24px 70px rgba(12, 31, 54, 0.25);
+  --auth-gold: #d79a42;
 }
 
 .auth-shell {
@@ -22,7 +23,36 @@
   background: radial-gradient(circle at 12% 18%, #d7ebf4 0%, #c5dfee 28%, transparent 58%),
     radial-gradient(circle at 86% 16%, #f6e6c8 0%, #e9d7b4 25%, transparent 52%),
     linear-gradient(155deg, #0d1f35 0%, #163253 44%, #173f5c 72%, #0f2b45 100%);
+  background-size: 130% 130%, 130% 130%, 100% 100%;
+  animation: bgShift 16s ease-in-out infinite alternate;
   font-family: "Merriweather Sans", "Segoe UI", Tahoma, sans-serif;
+}
+
+.auth-shell::before,
+.auth-shell::after {
+  content: "";
+  position: absolute;
+  width: min(42vw, 520px);
+  height: min(42vw, 520px);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(36px);
+  opacity: 0.2;
+  z-index: 0;
+}
+
+.auth-shell::before {
+  top: -14%;
+  right: -10%;
+  background: conic-gradient(from 180deg, rgba(88, 187, 180, 0.55), rgba(24, 83, 124, 0.18), rgba(245, 190, 98, 0.38), rgba(88, 187, 180, 0.55));
+  animation: spinCloud 22s linear infinite;
+}
+
+.auth-shell::after {
+  bottom: -18%;
+  left: -12%;
+  background: conic-gradient(from 120deg, rgba(245, 190, 98, 0.42), rgba(112, 187, 255, 0.2), rgba(16, 118, 110, 0.5), rgba(245, 190, 98, 0.42));
+  animation: spinCloud 28s linear infinite reverse;
 }
 
 .auth-layer {
@@ -38,6 +68,7 @@
   -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent 78%);
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent 78%);
   opacity: 0.22;
+  animation: gridFloat 14s linear infinite;
 }
 
 .auth-layer-orb {
@@ -80,7 +111,32 @@
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   padding: 34px;
-  animation: riseIn 0.65s ease-out;
+  overflow: hidden;
+  transform-origin: center;
+  animation: riseIn 0.65s ease-out, cardFloat 7.5s ease-in-out 0.7s infinite;
+}
+
+.auth-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -34%;
+  width: 70%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(15, 118, 110, 0.65) 45%, rgba(215, 154, 66, 0.7) 100%);
+  opacity: 0.85;
+  animation: topSweep 5.4s ease-in-out infinite;
+}
+
+.auth-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: auraPulse 3.8s ease-in-out infinite;
 }
 
 .auth-brand-row {
@@ -91,6 +147,8 @@
 }
 
 .auth-brand-pill {
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(130deg, #0f766e, #12577f);
   color: #fff;
   font-size: 11px;
@@ -99,6 +157,15 @@
   text-transform: uppercase;
   padding: 7px 12px;
   border-radius: 999px;
+}
+
+.auth-brand-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.42) 48%, rgba(255, 255, 255, 0) 64%);
+  transform: translateX(-130%);
+  animation: sheen 4.4s ease-in-out infinite;
 }
 
 .auth-brand-dot {
@@ -116,6 +183,12 @@
   font-size: 32px;
   line-height: 1.12;
   color: var(--auth-ink);
+  background: linear-gradient(110deg, #0f2340 0%, #1a5474 42%, var(--auth-gold) 72%, #0f2340 100%);
+  background-size: 230% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleSweep 5.6s ease-in-out infinite;
 }
 
 .auth-subtitle {
@@ -123,6 +196,9 @@
   margin-bottom: 20px;
   font-size: 14px;
   color: var(--auth-ink-soft);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: formReveal 0.5s ease-out 0.12s forwards;
 }
 
 .auth-alert {
@@ -133,6 +209,7 @@
   color: #902020;
   padding: 11px 12px;
   font-size: 14px;
+  animation: alertIn 0.3s ease-out;
 }
 
 .auth-form {
@@ -141,6 +218,29 @@
 
 .form-field {
   margin-bottom: 18px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: formReveal 0.52s ease-out forwards;
+}
+
+.form-field:focus-within {
+  transform: translateY(-1px);
+}
+
+.auth-form .form-field:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.auth-form .form-field:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.auth-form .form-field:nth-child(3) {
+  animation-delay: 0.22s;
+}
+
+.auth-form .form-field:nth-child(4) {
+  animation-delay: 0.28s;
 }
 
 .form-label {
@@ -158,7 +258,9 @@
   padding: 0 13px;
   border-radius: 12px;
   border: 1px solid var(--auth-border);
-  background: #ffffff;
+  background: linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(120deg, rgba(15, 118, 110, 0.16), rgba(22, 80, 120, 0.12), rgba(215, 154, 66, 0.2)) border-box;
+  border: 1px solid transparent;
   color: #112033;
   font-size: 14px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
@@ -170,13 +272,15 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #1a8a85;
+  border-color: transparent;
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.17);
   transform: translateY(-1px);
+  animation: inputGlow 2.2s linear infinite;
 }
 
 .form-input:disabled {
   background: #f1f4f8;
+  border-color: #dce2ea;
   color: #8b97a8;
   cursor: not-allowed;
 }
@@ -205,6 +309,9 @@
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
   box-shadow: 0 16px 26px rgba(21, 88, 111, 0.3);
+  opacity: 0;
+  transform: translateY(12px);
+  animation: formReveal 0.52s ease-out 0.34s forwards;
 }
 
 .primary-button:hover:not(:disabled) {
@@ -228,6 +335,9 @@
   text-align: center;
   font-size: 14px;
   color: #4c5f75;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: formReveal 0.52s ease-out 0.42s forwards;
 }
 
 .auth-switch-btn {
@@ -251,6 +361,130 @@
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bgShift {
+  0% {
+    background-position: 0% 0%, 100% 0%, 0 0;
+  }
+  100% {
+    background-position: 18% 12%, 84% 18%, 0 0;
+  }
+}
+
+@keyframes spinCloud {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.06);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes cardFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-0.35deg);
+  }
+}
+
+@keyframes gridFloat {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 48px 48px, 48px 48px;
+  }
+}
+
+@keyframes topSweep {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.85;
+  }
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(230%);
+    opacity: 0;
+  }
+}
+
+@keyframes sheen {
+  0%,
+  55% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+@keyframes titleSweep {
+  0%,
+  100% {
+    background-position: 0% 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+}
+
+@keyframes formReveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes inputGlow {
+  0% {
+    background: linear-gradient(#ffffff, #ffffff) padding-box,
+      linear-gradient(120deg, rgba(15, 118, 110, 0.22), rgba(22, 80, 120, 0.14), rgba(215, 154, 66, 0.24)) border-box;
+  }
+  50% {
+    background: linear-gradient(#ffffff, #ffffff) padding-box,
+      linear-gradient(220deg, rgba(15, 118, 110, 0.24), rgba(27, 109, 149, 0.18), rgba(215, 154, 66, 0.28)) border-box;
+  }
+  100% {
+    background: linear-gradient(#ffffff, #ffffff) padding-box,
+      linear-gradient(320deg, rgba(15, 118, 110, 0.22), rgba(22, 80, 120, 0.14), rgba(215, 154, 66, 0.24)) border-box;
+  }
+}
+
+@keyframes alertIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes auraPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.72;
   }
 }
 
@@ -301,5 +535,29 @@
 
   .auth-subtitle {
     font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-shell,
+  .auth-shell::before,
+  .auth-shell::after,
+  .auth-layer-grid,
+  .auth-layer-orb,
+  .auth-layer-glow,
+  .auth-card,
+  .auth-card::before,
+  .auth-card::after,
+  .auth-brand-pill::after,
+  .auth-brand-dot,
+  .auth-title,
+  .auth-subtitle,
+  .form-field,
+  .primary-button,
+  .auth-switch,
+  .auth-alert {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
   }
 }

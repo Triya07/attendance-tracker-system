@@ -87,6 +87,60 @@ export const attendanceAPI = {
       method: "GET",
     });
   },
+
+  getTeacherStudents: async () => {
+    return apiCall("/attendance/teacher/students", {
+      method: "GET",
+    });
+  },
+
+  markAttendanceBulk: async (payload) => {
+    return apiCall("/attendance/teacher/mark-bulk", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getTeacherRecords: async () => {
+    return apiCall("/attendance/teacher/records", {
+      method: "GET",
+    });
+  },
+
+  getTeacherReport: async () => {
+    return apiCall("/attendance/teacher/report", {
+      method: "GET",
+    });
+  },
+
+  updateTeacherSession: async (payload) => {
+    return apiCall("/attendance/teacher/session", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+};
+
+export const assignmentAPI = {
+  list: async () => {
+    return apiCall("/assignments", {
+      method: "GET",
+    });
+  },
+
+  create: async (payload) => {
+    return apiCall("/assignments", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  update: async (id, payload) => {
+    return apiCall(`/assignments/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
 };
 
 /**

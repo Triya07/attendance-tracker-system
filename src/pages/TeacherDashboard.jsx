@@ -1,82 +1,91 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { assignmentAPI, attendanceAPI } from "../utils/apiClient";
 import "../styles/teacher-dashboard.css";
 
+const classTemplates = [
+  { id: 1, subject: "Data Structures", course: "B.Tech CSE", semester: "3", section: "A" },
+  { id: 2, subject: "DBMS", course: "B.Tech CSE", semester: "4", section: "A" },
+  { id: 3, subject: "Web Development", course: "B.Tech CSE", semester: "4", section: "B" },
+];
+
 function TeacherDashboard() {
-  const [teacherData] = useState({
-    name: "Dr. Priya Sharma",
-    teacherId: "TCH20240301",
-    department: "Computer Science",
-    subjectsAssigned: ["Data Structures", "DBMS", "Web Development"],
-    profilePhoto: "https://ui-avatars.com/api/?name=Priya+Sharma&size=150&background=f59e0b&color=fff",
-  });
-
-  const [classes] = useState([
-    { id: 1, subject: "Data Structures", course: "B.Tech CSE", semester: "3rd", section: "A" },
-    { id: 2, subject: "Data Structures", course: "B.Tech CSE", semester: "3rd", section: "B" },
-    { id: 3, subject: "DBMS", course: "B.Tech CSE", semester: "4th", section: "A" },
-    { id: 4, subject: "Web Development", course: "B.Tech CSE", semester: "4th", section: "B" },
-  ]);
-
-  const [students] = useState([
-    { id: 1, name: "Rahul Kumar", rollNo: "101", attendance: 18, total: 20 },
-    { id: 2, name: "Priya Verma", rollNo: "102", attendance: 19, total: 20 },
-    { id: 3, name: "Arjun Singh", rollNo: "103", attendance: 16, total: 20 },
-    { id: 4, name: "Neha Gupta", rollNo: "104", attendance: 20, total: 20 },
-    { id: 5, name: "Vikram Patel", rollNo: "105", attendance: 14, total: 20 },
-    { id: 6, name: "Anjali Sharma", rollNo: "106", attendance: 19, total: 20 },
-    { id: 7, name: "Karan Singh", rollNo: "107", attendance: 17, total: 20 },
-    { id: 8, name: "Divya Nair", rollNo: "108", attendance: 15, total: 20 },
-  ]);
-
-  const [selectedClass, setSelectedClass] = useState(classes[0]);
+  const [students, setStudents] = useState([]);
+  const [records, setRecords] = useState([]);
+  const [reportRows, setReportRows] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [selectedClass, setSelectedClass] = useState(classTemplates[0]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-  const [attendanceStatus, setAttendanceStatus] = useState(() => {
-    const saved = localStorage.getItem("teacherAttendanceStatus");
-    return saved ? JSON.parse(saved) : {};
-  });
-
+  const [attendanceStatus, setAttendanceStatus] = useState({});
   const [activeTab, setActiveTab] = useState("mark");
   const [editingRecord, setEditingRecord] = useState(null);
+  const [editingStatus, setEditingStatus] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  const [attendanceRecords, setAttendanceRecords] = useState(() => {
-    const saved = localStorage.getItem("teacherAttendanceRecords");
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 1,
-        date: "2025-03-10",
-        subject: "Data Structures",
-        section: "A",
-        presentCount: 45,
-        totalCount: 50,
-      },
-      {
-        id: 2,
-        date: "2025-03-09",
-        subject: "DBMS",
-        section: "A",
-        presentCount: 48,
-        totalCount: 50,
-      },
-      {
-        id: 3,
-        date: "2025-03-08",
-        subject: "Web Development",
-        section: "B",
-        presentCount: 42,
-        totalCount: 50,
-      },
-    ];
+  const [assignmentForm, setAssignmentForm] = useState({
+    title: "",
+    description: "",
+    dueDate: "",
+    subject: classTemplates[0].subject,
   });
 
-  // Save attendance status to localStorage
-  useEffect(() => {
-    localStorage.setItem("teacherAttendanceStatus", JSON.stringify(attendanceStatus));
-  }, [attendanceStatus]);
+  const currentUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("currentUser") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
 
-  // Save attendance records to localStorage
+  const teacherData = useMemo(
+    () => ({
+      name: currentUser.name || "Teacher",
+      teacherId: currentUser.id || "-",
+      department: "Academic Department",
+      subjectsAssigned: classTemplates.map((item) => item.subject),
+      profilePhoto: `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        currentUser.name || "Teacher",
+      )}&size=150&background=f59e0b&color=fff`,
+    }),
+    [currentUser],
+  );
+
+  const loadTeacherData = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const [studentsResponse, recordsResponse, reportResponse, assignmentResponse] =
+        await Promise.all([
+          attendanceAPI.getTeacherStudents(),
+          attendanceAPI.getTeacherRecords(),
+          attendanceAPI.getTeacherReport(),
+          assignmentAPI.list(),
+        ]);
+
+      setStudents(studentsResponse);
+      setRecords(recordsResponse);
+      setReportRows(reportResponse);
+      setAssignments(assignmentResponse);
+    } catch (fetchError) {
+      setError(fetchError.message || "Failed to load teacher dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem("teacherAttendanceRecords", JSON.stringify(attendanceRecords));
-  }, [attendanceRecords]);
+    loadTeacherData();
+  }, []);
+
+  useEffect(() => {
+    if (!message) {
+      return;
+    }
+    const timer = setTimeout(() => setMessage(""), 2500);
+    return () => clearTimeout(timer);
+  }, [message]);
 
   const handleAttendanceChange = (studentId, status) => {
     setAttendanceStatus({
@@ -88,7 +97,7 @@ function TeacherDashboard() {
   const markAllPresent = () => {
     const newStatus = {};
     students.forEach((student) => {
-      newStatus[student.id] = "present";
+      newStatus[student._id] = "present";
     });
     setAttendanceStatus(newStatus);
   };
@@ -96,22 +105,38 @@ function TeacherDashboard() {
   const markAllAbsent = () => {
     const newStatus = {};
     students.forEach((student) => {
-      newStatus[student.id] = "absent";
+      newStatus[student._id] = "absent";
     });
     setAttendanceStatus(newStatus);
   };
 
-  const handleSubmitAttendance = () => {
+  const handleSubmitAttendance = async () => {
     if (Object.keys(attendanceStatus).length === 0) {
-      alert("Please mark attendance for at least one student");
+      setError("Please mark attendance for at least one student");
       return;
     }
-    alert(`Attendance submitted for ${selectedClass.subject} on ${selectedDate}`);
-    setAttendanceStatus({});
-  };
 
-  const getAttendancePercentage = (attendance, total) => {
-    return Math.round((attendance / total) * 100);
+    setError("");
+    try {
+      await attendanceAPI.markAttendanceBulk({
+        subject: selectedClass.subject,
+        course: selectedClass.course,
+        section: selectedClass.section,
+        semester: selectedClass.semester,
+        date: selectedDate,
+        entries: students.map((student) => ({
+          studentId: student._id,
+          status: attendanceStatus[student._id] || "absent",
+        })),
+      });
+
+      setMessage(`Attendance submitted for ${selectedClass.subject} on ${selectedDate}`);
+      await loadTeacherData();
+    } catch (submitError) {
+      setError(submitError.message || "Failed to submit attendance");
+    }
+
+    setAttendanceStatus({});
   };
 
   const getPercentageColor = (percentage) => {
@@ -120,20 +145,73 @@ function TeacherDashboard() {
     return "#ef4444";
   };
 
-  const getStatusColor = (status) => {
-    return status === "present" ? "#10b981" : "#ef4444";
-  };
-
   const handleEditRecord = (record) => {
     setEditingRecord(record);
+    const nextStatus = {};
+    record.entries.forEach((entry) => {
+      nextStatus[entry.studentId] = entry.status;
+    });
+    setEditingStatus(nextStatus);
     setActiveTab("edit");
   };
 
-  const handleUpdateRecord = () => {
-    alert("Attendance record updated successfully");
+  const handleUpdateRecord = async () => {
+    if (!editingRecord) {
+      return;
+    }
+
+    try {
+      await attendanceAPI.updateTeacherSession({
+        date: editingRecord.date,
+        subject: editingRecord.subject,
+        section: editingRecord.section,
+        entries: editingRecord.entries.map((entry) => ({
+          studentId: entry.studentId,
+          status: editingStatus[entry.studentId] || entry.status,
+        })),
+      });
+
+      setMessage("Attendance record updated successfully");
+      await loadTeacherData();
+    } catch (updateError) {
+      setError(updateError.message || "Failed to update record");
+      return;
+    }
+
     setEditingRecord(null);
     setActiveTab("records");
   };
+
+  const handleCreateAssignment = async () => {
+    if (!assignmentForm.title || !assignmentForm.dueDate) {
+      setError("Assignment title and due date are required");
+      return;
+    }
+
+    try {
+      await assignmentAPI.create(assignmentForm);
+      setAssignmentForm({
+        title: "",
+        description: "",
+        dueDate: "",
+        subject: selectedClass.subject,
+      });
+      setMessage("Assignment created successfully");
+      await loadTeacherData();
+    } catch (assignmentError) {
+      setError(assignmentError.message || "Failed to create assignment");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="teacher-dashboard">
+        <div className="glass-panel attendance-section">
+          <h3>Loading teacher dashboard...</h3>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="teacher-dashboard">
@@ -142,6 +220,9 @@ function TeacherDashboard() {
         <h1>Teacher Dashboard</h1>
         <p>Manage classes and mark attendance efficiently</p>
       </div>
+
+      {error && <div className="glass-panel" style={{ color: "#ef4444" }}>{error}</div>}
+      {message && <div className="glass-panel" style={{ color: "#10b981" }}>{message}</div>}
 
       {/* Teacher Profile Section */}
       <div className="glass-panel profile-section">
@@ -202,6 +283,12 @@ function TeacherDashboard() {
         >
           <span className="tab-icon">✏️</span> Edit Attendance
         </button>
+        <button
+          className={`nav-tab ${activeTab === "assignment" ? "active" : ""}`}
+          onClick={() => setActiveTab("assignment")}
+        >
+          <span className="tab-icon">📚</span> Assignments
+        </button>
       </div>
 
       {/* MARK ATTENDANCE TAB */}
@@ -221,10 +308,12 @@ function TeacherDashboard() {
                   className="form-select"
                   value={selectedClass.id}
                   onChange={(e) =>
-                    setSelectedClass(classes.find((c) => c.id === parseInt(e.target.value)))
+                    setSelectedClass(
+                      classTemplates.find((c) => c.id === parseInt(e.target.value, 10)),
+                    )
                   }
                 >
-                  {classes.map((cls) => (
+                  {classTemplates.map((cls) => (
                     <option key={cls.id} value={cls.id}>
                       {cls.subject} - {cls.course} ({cls.section})
                     </option>
@@ -284,7 +373,7 @@ function TeacherDashboard() {
 
             <div className="student-list">
               {students.map((student, idx) => (
-                <div key={student.id} className="student-item" style={{ animationDelay: `${idx * 0.05}s` }}>
+                <div key={student._id} className="student-item" style={{ animationDelay: `${idx * 0.05}s` }}>
                   <div className="student-info">
                     <div className="student-name">{student.name}</div>
                     <div className="student-rollno">Roll No: {student.rollNo}</div>
@@ -293,17 +382,17 @@ function TeacherDashboard() {
                   <div className="attendance-buttons">
                     <button
                       className={`attendance-btn present ${
-                        attendanceStatus[student.id] === "present" ? "selected" : ""
+                        attendanceStatus[student._id] === "present" ? "selected" : ""
                       }`}
-                      onClick={() => handleAttendanceChange(student.id, "present")}
+                      onClick={() => handleAttendanceChange(student._id, "present")}
                     >
                       ✓ Present
                     </button>
                     <button
                       className={`attendance-btn absent ${
-                        attendanceStatus[student.id] === "absent" ? "selected" : ""
+                        attendanceStatus[student._id] === "absent" ? "selected" : ""
                       }`}
-                      onClick={() => handleAttendanceChange(student.id, "absent")}
+                      onClick={() => handleAttendanceChange(student._id, "absent")}
                     >
                       ✕ Absent
                     </button>
@@ -321,7 +410,7 @@ function TeacherDashboard() {
                   Marked: <strong>{Object.keys(attendanceStatus).length}</strong>
                 </span>
                 <span className="stat-item percentage">
-                  Progress: <strong>{Math.round((Object.keys(attendanceStatus).length / students.length) * 100)}%</strong>
+                  Progress: <strong>{students.length ? Math.round((Object.keys(attendanceStatus).length / students.length) * 100) : 0}%</strong>
                 </span>
               </div>
               <button className="submit-btn" onClick={handleSubmitAttendance}>
@@ -354,8 +443,8 @@ function TeacherDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {attendanceRecords.map((record, idx) => (
-                    <tr key={record.id} style={{ animationDelay: `${idx * 0.05}s` }}>
+                  {records.map((record, idx) => (
+                    <tr key={record.sessionKey} style={{ animationDelay: `${idx * 0.05}s` }}>
                       <td>{new Date(record.date).toLocaleDateString()}</td>
                       <td>{record.subject}</td>
                       <td>{record.section}</td>
@@ -383,7 +472,12 @@ function TeacherDashboard() {
                         <button
                           className="action-icon-btn view"
                           title="View Details"
-                          onClick={() => alert("View details for " + record.subject)}
+                          onClick={() => {
+                            const details = record.entries
+                              .map((entry) => `${entry.studentName}: ${entry.status}`)
+                              .join("\n");
+                            window.alert(details || "No records found");
+                          }}
                         >
                           👁️
                         </button>
@@ -447,15 +541,15 @@ function TeacherDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((student, idx) => {
-                    const percentage = getAttendancePercentage(student.attendance, student.total);
-                    const absent = student.total - student.attendance;
+                  {reportRows.map((student, idx) => {
+                    const percentage = Number(student.attendancePercentage || 0);
+                    const absent = student.absent;
                     return (
-                      <tr key={student.id} style={{ animationDelay: `${idx * 0.05}s` }}>
+                      <tr key={student.studentId} style={{ animationDelay: `${idx * 0.05}s` }}>
                         <td className="student-name-report">{student.name}</td>
-                        <td>{student.rollNo}</td>
-                        <td>{student.total}</td>
-                        <td className="present-count">{student.attendance}</td>
+                        <td>{student.email || "-"}</td>
+                        <td>{student.totalClasses}</td>
+                        <td className="present-count">{student.present}</td>
                         <td className="absent-count">{absent}</td>
                         <td>
                           <span
@@ -485,23 +579,32 @@ function TeacherDashboard() {
             <div className="report-summary">
               <div className="summary-card">
                 <h4>Highest Attendance</h4>
-                <p className="summary-value">100%</p>
-                <p className="summary-students">4 Students</p>
+                <p className="summary-value">
+                  {reportRows.length ? `${Math.max(...reportRows.map((r) => r.attendancePercentage)).toFixed(0)}%` : "0%"}
+                </p>
+                <p className="summary-students">Top performer</p>
               </div>
               <div className="summary-card">
                 <h4>Average Attendance</h4>
-                <p className="summary-value">86%</p>
-                <p className="summary-students">Across All</p>
+                <p className="summary-value">
+                  {reportRows.length
+                    ? `${(
+                        reportRows.reduce((sum, row) => sum + row.attendancePercentage, 0) /
+                        reportRows.length
+                      ).toFixed(0)}%`
+                    : "0%"}
+                </p>
+                <p className="summary-students">Across all students</p>
               </div>
               <div className="summary-card">
                 <h4>Low Attendance</h4>
-                <p className="summary-value">70%</p>
-                <p className="summary-students">1 Student</p>
+                <p className="summary-value">{reportRows.filter((row) => row.attendancePercentage < 75).length}</p>
+                <p className="summary-students">Students below 75%</p>
               </div>
               <div className="summary-card">
                 <h4>Total Classes</h4>
-                <p className="summary-value">20</p>
-                <p className="summary-students">This Semester</p>
+                <p className="summary-value">{records.length}</p>
+                <p className="summary-students">Attendance sessions</p>
               </div>
             </div>
           </div>
@@ -537,15 +640,35 @@ function TeacherDashboard() {
 
                   <div className="edit-student-list">
                     <h4>Update Student Attendance</h4>
-                    {students.map((student, idx) => (
-                      <div key={student.id} className="edit-student-item" style={{ animationDelay: `${idx * 0.05}s` }}>
+                    {editingRecord.entries.map((entry, idx) => (
+                      <div key={entry.studentId} className="edit-student-item" style={{ animationDelay: `${idx * 0.05}s` }}>
                         <div className="edit-student-info">
-                          <span className="edit-student-name">{student.name}</span>
-                          <span className="edit-student-roll">{student.rollNo}</span>
+                          <span className="edit-student-name">{entry.studentName}</span>
+                          <span className="edit-student-roll">{entry.studentEmail || "-"}</span>
                         </div>
                         <div className="edit-attendance-buttons">
-                          <button className="edit-btn present">✓ Present</button>
-                          <button className="edit-btn absent">✕ Absent</button>
+                          <button
+                            className={`edit-btn present ${editingStatus[entry.studentId] === "present" ? "selected" : ""}`}
+                            onClick={() =>
+                              setEditingStatus((prev) => ({
+                                ...prev,
+                                [entry.studentId]: "present",
+                              }))
+                            }
+                          >
+                            ✓ Present
+                          </button>
+                          <button
+                            className={`edit-btn absent ${editingStatus[entry.studentId] === "absent" ? "selected" : ""}`}
+                            onClick={() =>
+                              setEditingStatus((prev) => ({
+                                ...prev,
+                                [entry.studentId]: "absent",
+                              }))
+                            }
+                          >
+                            ✕ Absent
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -567,6 +690,116 @@ function TeacherDashboard() {
                 <p className="empty-state-text">Select a record from the View Records tab to edit</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "assignment" && (
+        <div className="tab-content">
+          <div className="glass-panel report-section">
+            <div className="section-header">
+              <h3>Manage Assignments</h3>
+              <p className="section-subtitle">Create assignments and track upcoming deadlines</p>
+            </div>
+
+            <div className="selection-grid">
+              <div className="selection-form-group">
+                <label className="form-label">Title</label>
+                <input
+                  className="form-select"
+                  value={assignmentForm.title}
+                  onChange={(e) =>
+                    setAssignmentForm((prev) => ({
+                      ...prev,
+                      title: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="selection-form-group">
+                <label className="form-label">Due Date</label>
+                <input
+                  type="date"
+                  className="form-select"
+                  value={assignmentForm.dueDate}
+                  onChange={(e) =>
+                    setAssignmentForm((prev) => ({
+                      ...prev,
+                      dueDate: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="selection-form-group">
+                <label className="form-label">Subject</label>
+                <select
+                  className="form-select"
+                  value={assignmentForm.subject}
+                  onChange={(e) =>
+                    setAssignmentForm((prev) => ({
+                      ...prev,
+                      subject: e.target.value,
+                    }))
+                  }
+                >
+                  {classTemplates.map((cls) => (
+                    <option key={cls.id} value={cls.subject}>
+                      {cls.subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="selection-form-group">
+                <label className="form-label">Description</label>
+                <input
+                  className="form-select"
+                  value={assignmentForm.description}
+                  onChange={(e) =>
+                    setAssignmentForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="action-buttons">
+              <button className="action-btn green" onClick={handleCreateAssignment}>
+                + Create Assignment
+              </button>
+            </div>
+
+            <div className="records-table-wrapper">
+              <table className="records-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Subject</th>
+                    <th>Due Date</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignments.map((item) => (
+                    <tr key={item._id}>
+                      <td>{item.title}</td>
+                      <td>{item.subject}</td>
+                      <td>{new Date(item.dueDate).toLocaleDateString()}</td>
+                      <td>{item.description || "-"}</td>
+                    </tr>
+                  ))}
+                  {assignments.length === 0 && (
+                    <tr>
+                      <td colSpan="4">No assignments created yet</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
