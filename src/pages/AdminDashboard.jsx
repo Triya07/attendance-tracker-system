@@ -524,7 +524,6 @@ function AdminDashboard() {
               )}
 
             </div>
-
             <div className="modal-footer">
               <button className="btn-cancel" onClick={closeModal}>
                 Cancel
